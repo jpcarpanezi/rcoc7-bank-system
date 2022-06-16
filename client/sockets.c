@@ -10,7 +10,6 @@
 #include <errno.h>
 #include "errnoname.h"
 
-#define MSG_ARRAY_SIZE 100000
 #define SERVER_ADDRESS "127.0.0.1"
 #define SERVER_PORT 5000
 #define LISTEN_BACKLOG 10
@@ -71,6 +70,12 @@ void bindPort(int sockid)
     }
 }
 
+void setSocketForReuse(int sockid)
+{
+    int option = 1;
+    setsockopt(sockid, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+}
+
 void listenSocket(int sockid)
 {
     if (listen(sockid, LISTEN_BACKLOG) < 0)
@@ -82,9 +87,9 @@ void listenSocket(int sockid)
     }
 }
 
-int sendMessage(int sockid, char *message)
+int sendMessage(int sockid, void *message, int messageSize)
 {
-    int msg = send(sockid, message, strlen(message), 0);
+    int msg = send(sockid, message, messageSize, 0);
     if (msg == -1)
     {
         int err = errno;
@@ -92,14 +97,14 @@ int sendMessage(int sockid, char *message)
         return 1;
     }
 
-    printf("Message with size %d sent\n", msg);
+    printf("Message with size %d sent\n", messageSize);
 
     return 0;
 }
 
-int receiveMessage(int sockid, char txt[MSG_ARRAY_SIZE])
+int receiveMessage(int sockid, void *message, int messageSize)
 {
-    int msg = recv(sockid, txt, MSG_ARRAY_SIZE - 1, 0);
+    int msg = recv(sockid, message, messageSize, 0);
 
     if (msg == -1)
     {
@@ -109,4 +114,11 @@ int receiveMessage(int sockid, char txt[MSG_ARRAY_SIZE])
     }
 
     return 0;
+}
+
+void *getInAddr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET)
+        return &(((struct sockaddr_in *)sa)->sin_addr);
+    return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
