@@ -12,7 +12,7 @@
 
 #define MSG_ARRAY_SIZE 100000
 #define SERVER_ADDRESS "127.0.0.1"
-#define SERVER_PORT 80
+#define SERVER_PORT 5000
 #define LISTEN_BACKLOG 10
 
 int createSocket()
