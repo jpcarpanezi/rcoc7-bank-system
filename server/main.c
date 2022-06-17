@@ -10,37 +10,9 @@
 #include <errno.h>
 #include "errnoname.h"
 #include "sockets.h"
+#include "account.h"
 
-/* ======================= MÉTODOS DE EXEMPLO ======================= */
-
-typedef struct str_one
-{
-    int num_conta;
-    char nome[10000];
-} str_one;
-
-typedef struct str_two
-{
-    float valor;
-} str_two;
-
-void method1(void *infoPtr)
-{
-    struct str_one *info = (struct str_one *)infoPtr;
-
-    printf("Num conta: %i\n", info->num_conta);
-    printf("Nome: %s\n", info->nome);
-}
-
-void method2(void *infoPtr)
-{
-    struct str_two *info = (struct str_two *)infoPtr;
-    printf("Valor: %f\n", info->valor);
-}
-
-/* ======================= FIM MÉTODOS DE EXEMPLO ======================= */
-
-typedef void (*func)(void *info);
+typedef response (*func)(void *info);
 typedef struct method
 {
     char name[100];
@@ -51,21 +23,20 @@ typedef struct method
 int main()
 {
     struct method methods[] = {
-        {.name = "Metodo1", .structSize = sizeof(str_one), .function = method1},
-        {.name = "Metodo2", .structSize = sizeof(str_two), .function = method2},
+        {.name = "Register", .structSize = sizeof(new_account), .function = create_account}
     };
-    int numOfMethods = sizeof(methods) / sizeof(method);
+    int num_of_methods = sizeof(methods) / sizeof(method);
 
     printf("Starting\n");
 
-    int sockid = createSocket();
-    setSocketForReuse(sockid);
+    int sockid = create_socket();
+    set_socket_for_reuse(sockid);
     printf("Created socket\n");
 
-    bindPort(sockid);
+    bind_port(sockid);
     printf("Binded port\n");
 
-    listenSocket(sockid);
+    listen_socket(sockid);
     printf("Listening for connections on port %i\n", SERVER_PORT);
 
     while (1)
@@ -76,46 +47,55 @@ int main()
         int c = sizeof(struct sockaddr_in);
         struct sockaddr client;
 
-        int acceptSocketId = accept(sockid, (struct sockaddr *)&client, (socklen_t *)&c);
-        if (acceptSocketId < 0)
+        int accept_socket_id = accept(sockid, (struct sockaddr *)&client, (socklen_t *)&c);
+        if (accept_socket_id < 0)
         {
             int err = errno;
             printf("Failed to accept connection with error %s (%i)\n", errnoname(err), err);
         }
 
-        char clientIp[INET6_ADDRSTRLEN];
-        void *addr = getInAddr((struct sockaddr *)&client);
-        inet_ntop(client.sa_family, addr, clientIp, INET6_ADDRSTRLEN);
-        printf("Connection received from %s\n", clientIp);
+        char client_ip[INET6_ADDRSTRLEN];
+        void *addr = get_in_addr((struct sockaddr *)&client);
+        inet_ntop(client.sa_family, addr, client_ip, INET6_ADDRSTRLEN);
+        printf("Connection received from %s\n", client_ip);
 
         char method[100];
-        receiveMessage(acceptSocketId, method, sizeof(method));
+        receive_message(accept_socket_id, method, sizeof(method));
         printf("Received method %s\n", method);
 
         fflush(stdout);
 
-        int methodFound = 0;
-        for (int i = 0; i < numOfMethods; i++)
+        int method_found = 0;
+        for (int i = 0; i < num_of_methods; i++)
         {
             if (strcmp(method, methods[i].name) == 0)
             {
-                methodFound = 1;
+                method_found = 1;
 
                 void *info = malloc(methods[i].structSize);
                 bzero(info, methods[i].structSize);
 
-                receiveMessage(acceptSocketId, info, methods[i].structSize);
+                receive_message(accept_socket_id, info, methods[i].structSize);
 
-                methods[i].function(info);
+                struct response res = methods[i].function(info);
+
+                if (res.response_str != NULL)
+                {
+                    send_message(accept_socket_id, res.response_str, res.response_size);
+                }
+
+                free(info);
+                break;
             }
         }
 
-        if (methodFound == 0)
+        if (method_found == 0)
         {
             printf("Invalid method submitted\n");
+            // TODO: SEND INVALID MESSAGE
         }
 
-        close(acceptSocketId);
+        close(accept_socket_id);
 
         printf("Closed connection\n\n");
     }

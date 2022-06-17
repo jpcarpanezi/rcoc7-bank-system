@@ -11,49 +11,58 @@
 #include "errnoname.h"
 #include "sockets.h"
 
-typedef struct str_one
+#define REGISTER_METHOD "Register"
+
+typedef struct new_account
 {
-    int num_conta;
-    char nome[10000];
-} str_one;
+    char name[100];
+    char cpf[12];
+    char senha[50];
+} new_account;
 
-typedef struct str_two
+typedef struct new_account_response
 {
-    float valor;
-} str_two;
+    char pix[37];
+    char token[37];
+    char response[100];
+    int success;
+} new_account_response;
 
-void sendMethod1(int sockid)
+void create_account(int sock_id)
 {
-    struct str_one one;
-    bzero(&(one), sizeof(one));
-    one.num_conta = 500;
-    strcpy(one.nome, "Meu Nome");
+    struct new_account acc;
+    bzero(&(acc), sizeof(acc));
+    strcpy(acc.cpf, "123456");
+    strcpy(acc.name, "MEU NOMBRE");
+    strcpy(acc.senha, "12345");
 
-    char method[100] = "Metodo1";
-    sendMessage(sockid, method, sizeof(method));
-    sendMessage(sockid, &one, sizeof(one));
-}
+    send_message(sock_id, REGISTER_METHOD, sizeof(REGISTER_METHOD));
+    send_message(sock_id, &acc, sizeof(acc));
 
-void sendMethod2(int sockid)
-{
-    struct str_two two;
-    bzero(&(two), sizeof(two));
-    two.valor = 20.04;
+    printf("Sent message\n");
 
-    char method[100] = "Metodo2";
-    sendMessage(sockid, method, sizeof(method));
-    sendMessage(sockid, &two, sizeof(two));
+    struct new_account_response response;
+    bzero(&(response), sizeof(response));
+    receive_message(sock_id, &response, sizeof(response));
+
+    printf("Received message\n");
+
+    printf("Response: %s\n", response.response);
+    printf("Success: %i\n", response.success);
+    printf("Pix: %s\n", response.pix);
+    printf("Token: %s\n", response.token);
 }
 
 int main()
 {
-    int sockid = createSocket();
-    connectSocket(sockid);
+    int sock_id = create_socket();
+    connect_socket(sock_id);
 
-    sendMethod1(sockid);
+    create_account(sock_id);
 
-    sockid = createSocket();
-    connectSocket(sockid);
-    sendMethod2(sockid);
+    sock_id = create_socket();
+    connect_socket(sock_id);
+
+    create_account(sock_id);
     return 0;
 }
