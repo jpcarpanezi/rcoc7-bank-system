@@ -23,7 +23,8 @@ typedef struct method
 int main()
 {
     struct method methods[] = {
-        {.name = "Register", .structSize = sizeof(new_account), .function = create_account}
+        {.name = "Register", .structSize = sizeof(new_account), .function = create_account},
+        {.name = "SignIn", .structSize = sizeof(login), .function = sign_in}
     };
     int num_of_methods = sizeof(methods) / sizeof(method);
 
