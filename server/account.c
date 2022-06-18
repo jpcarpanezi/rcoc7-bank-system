@@ -285,20 +285,20 @@ struct response sign_in(void *info_ptr)
 {
     struct login *login = (struct login *)info_ptr;
 
-    struct login_response res;
-    bzero(&(res), sizeof(res));
+    struct login_response *res = malloc(sizeof(struct login_response));
+    bzero(res, sizeof(struct login_response));
     struct response final_res;
 
-    final_res.response_str = &(res);
-    final_res.response_size = sizeof(res);
+    final_res.response_str = res;
+    final_res.response_size = sizeof(struct login_response);
 
     struct account *acc = find_account_by_cpf(login->cpf);
 
     if (acc == NULL)
     {
         printf("Login attempt error, CPF not found\n");
-        res.success = 0;
-        strcpy(res.response, "Credenciais invalidas");
+        res->success = 0;
+        strcpy(res->response, "Credenciais invalidas");
 
         return final_res;
     }
@@ -306,16 +306,32 @@ struct response sign_in(void *info_ptr)
     if (strcmp(acc->password, login->password) != 0)
     {
         printf("Invalid password on login attempt in account ID %s\n", acc->pix);
-        res.success = 0;
-        strcpy(res.response, "Credenciais invalidas");
+        res->success = 0;
+        strcpy(res->response, "Credenciais invalidas");
 
         return final_res;
     }
 
-    char *uuid = gen_uuid();
-    res.success = 1;
-    strcpy(res.response, "Login realizado com sucesso");
-    strcpy(res.token, gen_uuid());
+    char uuid[37];
+    int retry_count = 0;
+    do
+    {
+        strcpy(uuid, gen_uuid());
+        retry_count++;
+
+        if (retry_count >= 5)
+        {
+            printf("Sign-in request failed, could not generate Token UUID\n");
+
+            res->success = 0;
+            strcpy(res->response, "Não foi possível realizar o login");
+            return final_res;
+        }
+    } while (find_account_by_token(uuid) != NULL);
+
+    res->success = 1;
+    strcpy(res->response, "Login realizado com sucesso");
+    strcpy(res->token, uuid);
     strcpy(acc->token, uuid);
     printf("Successfuly login in account ID %s\n", acc->pix);
 

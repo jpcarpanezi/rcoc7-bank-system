@@ -61,29 +61,7 @@ char acc_token[37];
 char *gerar_cpf()
 {
     char cpfs[][12] = {
-        "11529137004",
-        "94088831012",
-        "14418777032",
-        "77859229005",
-        "23606689004",
-        "27288851095",
-        "98787447010",
-        "85839138037",
-        "13750786070",
-        "79417837036",
-        "60093889020",
-        "61316773019",
-        "95094217070",
-        "30192886061",
-        "10600044025",
-        "27534520088",
-        "62180757026",
-        "86857732027",
-        "66424106022",
-        "52163983099",
-        "86011783082",
-        "66357725021",
-        "29656868005",
+        "11111111111"
     };
 
     size_t size = sizeof(cpfs) / sizeof(cpfs[0]);
@@ -111,7 +89,7 @@ void create_account(int sock_id)
 {
     struct new_account acc;
     bzero(&(acc), sizeof(acc));
-    strcpy(acc.cpf, gerar_cpf());
+    strcpy(acc.cpf, "11111111111");
     strcpy(acc.name, "MEU NOMBRE");
     strcpy(acc.password, "12345");
 
@@ -138,6 +116,11 @@ void create_account(int sock_id)
     printf("Success: %i\n", response->success);
     printf("Pix: %s\n", response->pix);
     printf("Token: %s\n\n", response->token);
+
+    if (response->success)
+    {
+        strcpy(acc_token, response->token);
+    }
 }
 
 void make_deposit(int sock_id)
@@ -201,37 +184,49 @@ void make_withdraw(int sock_id)
 void sign_in(int sock_id) {
     struct login login;
     bzero(&(login), sizeof(login));
-    strcpy(login.cpf, "39644355890");
-    strcpy(login.password, "Senha@pwd20");
+    strcpy(login.cpf, "11111111111");
+    strcpy(login.password, "12345");
+
+    size_t size = METHOD_SIZE + sizeof(login);
+    void *data = malloc(size);
+    bzero(data, METHOD_SIZE);
+
+    char *method = malloc(METHOD_SIZE);
+    bzero(method, METHOD_SIZE);
+    strcpy(method, LOGIN_METHOD);
+    
+    memcpy(data, method, METHOD_SIZE);
+    memcpy(data + METHOD_SIZE, &(login), sizeof(login));
+
+    send_message(sock_id, data, size);
 
     printf("Sent message\n");
 
-    send_message(sock_id, LOGIN_METHOD, sizeof(LOGIN_METHOD));
-    send_message(sock_id, &login, sizeof(login));
-
-    struct login_response response;
-    bzero(&(response), sizeof(response));
-    receive_message(sock_id, &response, sizeof(response));
+    struct login_response *response = malloc(sizeof(struct login_response));
+    bzero(response, sizeof(struct login_response));
+    receive_message(sock_id, response, sizeof(struct login_response));
 
     printf("Received message\n");
 
-    printf("Response: %s\n", response.response);
-    printf("Success: %i\n", response.success);
-    printf("Token: %s\n", response.token);
+    printf("Response: %s\n", response->response);
+    printf("Success: %i\n", response->success);
+    printf("Token: %s\n\n", response->token);
+
+    if (response->success)
+    {
+        strcpy(acc_token, response->token);
+    }
 }
 
 int main()
 {
-    // int sock_id = create_socket();
-    // connect_socket(sock_id);
-
-    // create_account(sock_id);
-
     int sock_id = create_socket();
     connect_socket(sock_id);
     create_account(sock_id);
-    close(sock_id);
 
+    sock_id = create_socket();
+    connect_socket(sock_id);
+    sign_in(sock_id);
 
     sock_id = create_socket();
     connect_socket(sock_id);
