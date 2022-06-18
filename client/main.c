@@ -37,6 +37,15 @@ void create_account(int sock_id)
     strcpy(acc.senha, "12345");
 
     send_message(sock_id, REGISTER_METHOD, sizeof(REGISTER_METHOD));
+
+    char ok_msg[100];
+    receive_message(sock_id, ok_msg, sizeof(ok_msg));
+
+    if (strcmp(ok_msg, "OK") != 0)
+    {
+        printf("Expected message OK, received: %s\n", ok_msg);
+    }
+
     send_message(sock_id, &acc, sizeof(acc));
 
     printf("Sent message\n");
