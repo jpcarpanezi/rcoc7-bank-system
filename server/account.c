@@ -180,7 +180,7 @@ struct response create_account(void *info_ptr)
     final_res.response_str = &(res);
     final_res.response_size = sizeof(res);
 
-    if (validate_cpf(info->cpf) == 0)
+    if (!validate_cpf(info->cpf))
     {
         printf("Create account request failed, invalid CPF\n");
 

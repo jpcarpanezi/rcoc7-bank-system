@@ -42,7 +42,7 @@ int main()
 
     while (1)
     {
-        printf("Starting accept\n");
+        printf("Starting accept %i\n", rand());
         fflush(stdout);
 
         int c = sizeof(struct sockaddr_in);
@@ -75,6 +75,9 @@ int main()
 
                 void *info = malloc(methods[i].structSize);
                 bzero(info, methods[i].structSize);
+
+                char ok_msg[] = "OK";
+                send_message(accept_socket_id, ok_msg, sizeof(ok_msg));
 
                 receive_message(accept_socket_id, info, methods[i].structSize);
 
