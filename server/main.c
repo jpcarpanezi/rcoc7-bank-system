@@ -26,7 +26,8 @@ int main()
     struct method methods[] = {
         {.name = "Register", .struct_size = sizeof(new_account), .function = create_account},
         {.name = "Deposit", .struct_size = sizeof(deposit), .function = make_deposit},
-        {.name = "Withdraw", .struct_size = sizeof(withdraw), .function = make_withdraw}
+        {.name = "Withdraw", .struct_size = sizeof(withdraw), .function = make_withdraw},
+        {.name = "SignIn", .struct_size = sizeof(login), .function = sign_in}
     };
     int num_of_methods = sizeof(methods) / sizeof(method);
 

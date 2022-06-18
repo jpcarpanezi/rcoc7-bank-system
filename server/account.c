@@ -11,6 +11,12 @@
 #include "errnoname.h"
 #include "sockets.h"
 
+typedef struct response
+{
+    void *response_str;
+    size_t response_size;
+} response;
+
 typedef struct new_account
 {
     char name[100];
@@ -26,11 +32,18 @@ typedef struct new_account_response
     int success;
 } new_account_response;
 
-typedef struct response
+typedef struct login
 {
-    void *response_str;
-    size_t response_size;
-} response;
+    char cpf[12];
+    char password[50];
+} login;
+
+typedef struct login_response
+{
+    char token[37];
+    char response[100];
+    int success;
+} login_response;
 
 typedef struct account
 {
@@ -48,7 +61,7 @@ struct account *head = NULL;
 char *gen_uuid()
 {
     char v[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-    
+
     // 8 dash 4 dash 4 dash 4 dash 12
     static char buf[37] = {0};
 
@@ -265,5 +278,46 @@ struct response create_account(void *info_ptr)
     strcpy(res->token, new_account->token);
 
     printf("New account ID %s created\n", new_account->pix);
+    return final_res;
+}
+
+struct response sign_in(void *info_ptr)
+{
+    struct login *login = (struct login *)info_ptr;
+
+    struct login_response res;
+    bzero(&(res), sizeof(res));
+    struct response final_res;
+
+    final_res.response_str = &(res);
+    final_res.response_size = sizeof(res);
+
+    struct account *acc = find_account_by_cpf(login->cpf);
+
+    if (acc == NULL)
+    {
+        printf("Login attempt error, CPF not found\n");
+        res.success = 0;
+        strcpy(res.response, "Credenciais invalidas");
+
+        return final_res;
+    }
+
+    if (strcmp(acc->password, login->password) != 0)
+    {
+        printf("Invalid password on login attempt in account ID %s\n", acc->pix);
+        res.success = 0;
+        strcpy(res.response, "Credenciais invalidas");
+
+        return final_res;
+    }
+
+    char *uuid = gen_uuid();
+    res.success = 1;
+    strcpy(res.response, "Login realizado com sucesso");
+    strcpy(res.token, gen_uuid());
+    strcpy(acc->token, uuid);
+    printf("Successfuly login in account ID %s\n", acc->pix);
+
     return final_res;
 }

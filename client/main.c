@@ -15,6 +15,7 @@
 #define REGISTER_METHOD "Register"
 #define DEPOSIT_METHOD "Deposit"
 #define WITHDRAW_METHOD "Withdraw"
+#define LOGIN_METHOD "SignIn"
 
 typedef struct new_account
 {
@@ -95,6 +96,16 @@ char *gerar_cpf()
     strcpy(ret, cpfs[index]);
     return ret;
 }
+typedef struct login {
+    char cpf[12];
+    char password[50];
+} login;
+
+typedef struct login_response {
+    char token[37];
+    char response[100];
+    int success;
+} login_response;
 
 void create_account(int sock_id)
 {
@@ -187,12 +198,39 @@ void make_withdraw(int sock_id)
     printf("Success: %d\nResponse: %s\n\n", response->success, response->response);
 }
 
+void sign_in(int sock_id) {
+    struct login login;
+    bzero(&(login), sizeof(login));
+    strcpy(login.cpf, "39644355890");
+    strcpy(login.password, "Senha@pwd20");
+
+    printf("Sent message\n");
+
+    send_message(sock_id, LOGIN_METHOD, sizeof(LOGIN_METHOD));
+    send_message(sock_id, &login, sizeof(login));
+
+    struct login_response response;
+    bzero(&(response), sizeof(response));
+    receive_message(sock_id, &response, sizeof(response));
+
+    printf("Received message\n");
+
+    printf("Response: %s\n", response.response);
+    printf("Success: %i\n", response.success);
+    printf("Token: %s\n", response.token);
+}
+
 int main()
 {
+    // int sock_id = create_socket();
+    // connect_socket(sock_id);
+
+    // create_account(sock_id);
+
     int sock_id = create_socket();
     connect_socket(sock_id);
-
     create_account(sock_id);
+    close(sock_id);
 
 
     sock_id = create_socket();

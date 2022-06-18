@@ -18,6 +18,12 @@ typedef struct account
     struct account *next;
 } account;
 
+typedef struct login
+{
+    char cpf[12];
+    char password[50];
+} login;
+
 typedef struct response
 {
     void *response_str;
@@ -28,3 +34,4 @@ struct response create_account(void *info_ptr);
 struct account *find_account_by_cpf(char cpf[]);
 struct account *find_account_by_pix(char pix[]);
 struct account *find_account_by_token(char token[]);
+struct response sign_in(void *info_ptr);
