@@ -1,6 +1,9 @@
 #define SERVER_ADDRESS "127.0.0.1"
 #define SERVER_PORT 5000
 
+#define MAX_STREAM_SIZE 10000
+#define METHOD_SIZE sizeof(char) * 100
+
 int create_socket();
 int connect_socket(int sock_id);
 void bind_port(int sock_id);

@@ -14,6 +14,9 @@
 #define SERVER_PORT 5000
 #define LISTEN_BACKLOG 10
 
+#define MAX_STREAM_SIZE 10000
+#define METHOD_SIZE sizeof(char) * 100
+
 int create_socket()
 {
     int sock_id = socket(AF_INET, SOCK_STREAM, 0);
@@ -113,6 +116,7 @@ int receive_message(int sock_id, void *message, int message_size)
         return 1;
     }
 
+    printf("Received message with size %i\n", msg);
     return 0;
 }
 

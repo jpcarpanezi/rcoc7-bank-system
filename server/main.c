@@ -11,32 +11,35 @@
 #include "errnoname.h"
 #include "sockets.h"
 #include "account.h"
+#include "transactions.h"
 
 typedef response (*func)(void *info);
 typedef struct method
 {
     char name[100];
-    size_t structSize;
+    size_t struct_size;
     func function;
 } method;
 
 int main()
 {
     struct method methods[] = {
-        {.name = "Register", .structSize = sizeof(new_account), .function = create_account}
+        {.name = "Register", .struct_size = sizeof(new_account), .function = create_account},
+        {.name = "Deposit", .struct_size = sizeof(deposit), .function = make_deposit},
+        {.name = "Withdraw", .struct_size = sizeof(withdraw), .function = make_withdraw}
     };
     int num_of_methods = sizeof(methods) / sizeof(method);
 
     printf("Starting\n");
 
-    int sockid = create_socket();
-    set_socket_for_reuse(sockid);
+    int sock_id = create_socket();
+    set_socket_for_reuse(sock_id);
     printf("Created socket\n");
 
-    bind_port(sockid);
+    bind_port(sock_id);
     printf("Binded port\n");
 
-    listen_socket(sockid);
+    listen_socket(sock_id);
     printf("Listening for connections on port %i\n", SERVER_PORT);
 
     while (1)
@@ -47,7 +50,7 @@ int main()
         int c = sizeof(struct sockaddr_in);
         struct sockaddr client;
 
-        int accept_socket_id = accept(sockid, (struct sockaddr *)&client, (socklen_t *)&c);
+        int accept_socket_id = accept(sock_id, (struct sockaddr *)&client, (socklen_t *)&c);
         if (accept_socket_id < 0)
         {
             int err = errno;
@@ -59,8 +62,14 @@ int main()
         inet_ntop(client.sa_family, addr, client_ip, INET6_ADDRSTRLEN);
         printf("Connection received from %s\n", client_ip);
 
-        char method[100];
-        receive_message(accept_socket_id, method, sizeof(method));
+        void *data = malloc(MAX_STREAM_SIZE);
+        bzero(data, MAX_STREAM_SIZE);
+        receive_message(accept_socket_id, data, MAX_STREAM_SIZE);
+
+        char *method = malloc(sizeof(char) * METHOD_SIZE);
+        bzero(method, METHOD_SIZE);
+        memcpy(method, data, METHOD_SIZE);
+
         printf("Received method %s\n", method);
 
         fflush(stdout);
@@ -72,13 +81,9 @@ int main()
             {
                 method_found = 1;
 
-                void *info = malloc(methods[i].structSize);
-                bzero(info, methods[i].structSize);
-
-                char ok_msg[] = "OK";
-                send_message(accept_socket_id, ok_msg, sizeof(ok_msg));
-
-                receive_message(accept_socket_id, info, methods[i].structSize);
+                void *info = malloc(methods[i].struct_size);
+                bzero(info, methods[i].struct_size);
+                memcpy(info, data + METHOD_SIZE, methods[i].struct_size);
 
                 struct response res = methods[i].function(info);
 
@@ -92,10 +97,12 @@ int main()
             }
         }
 
+        free(data);
+        free(method);
+
         if (method_found == 0)
         {
             printf("Invalid method submitted\n");
-            // TODO: SEND INVALID MESSAGE
         }
 
         close(accept_socket_id);

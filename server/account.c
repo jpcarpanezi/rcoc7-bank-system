@@ -118,7 +118,7 @@ struct account *find_account_by_cpf(char cpf[])
             search_acc = acc;
             break;
         }
-        acc = head->next;
+        acc = acc->next;
     }
 
     return search_acc;
@@ -135,7 +135,7 @@ struct account *find_account_by_pix(char pix[])
             search_acc = acc;
             break;
         }
-        acc = head->next;
+        acc = acc->next;
     }
 
     return search_acc;
@@ -152,7 +152,7 @@ struct account *find_account_by_token(char token[])
             search_acc = acc;
             break;
         }
-        acc = head->next;
+        acc = acc->next;
     }
 
     return search_acc;
@@ -162,19 +162,19 @@ struct response create_account(void *info_ptr)
 {
     struct new_account *info = (struct new_account *)info_ptr;
 
-    struct new_account_response res;
-    bzero(&(res), sizeof(res));
+    struct new_account_response *res = malloc(sizeof(struct new_account_response));
+    bzero(res, sizeof(struct new_account_response));
     struct response final_res;
 
-    final_res.response_str = &(res);
-    final_res.response_size = sizeof(res);
+    final_res.response_str = res;
+    final_res.response_size = sizeof(struct new_account_response);
 
     if (!validate_cpf(info->cpf))
     {
         printf("Create account request failed, invalid CPF\n");
 
-        res.success = 0;
-        strcpy(res.response, "CPF inválido");
+        res->success = 0;
+        strcpy(res->response, "CPF inválido");
         return final_res;
     }
 
@@ -182,8 +182,8 @@ struct response create_account(void *info_ptr)
     {
         printf("Create account request failed, CPF already exists\n");
 
-        res.success = 0;
-        strcpy(res.response, "CPF já cadastrado");
+        res->success = 0;
+        strcpy(res->response, "CPF já cadastrado");
         return final_res;
     }
 
@@ -191,8 +191,8 @@ struct response create_account(void *info_ptr)
     {
         printf("Create account request failed, weak password\n");
 
-        res.success = 0;
-        strcpy(res.response, "Senha muito fraca");
+        res->success = 0;
+        strcpy(res->response, "Senha muito fraca");
         return final_res;
     }
 
@@ -200,13 +200,14 @@ struct response create_account(void *info_ptr)
     {
         printf("Create account request failed, empty name\n");
 
-        res.success = 0;
-        strcpy(res.response, "Nome vazio");
+        res->success = 0;
+        strcpy(res->response, "Nome vazio");
         return final_res;
     }
 
     struct account *new_account = malloc(sizeof(struct account));
     bzero(new_account, sizeof(struct account));
+
     strcpy(new_account->name, info->name);
     strcpy(new_account->cpf, info->cpf);
     strcpy(new_account->password, info->password);
@@ -221,8 +222,8 @@ struct response create_account(void *info_ptr)
         {
             printf("Create account request failed, could not generate Pix UUID\n");
 
-            res.success = 0;
-            strcpy(res.response, "Não foi possível realizar o cadastro");
+            res->success = 0;
+            strcpy(res->response, "Não foi possível realizar o cadastro");
             return final_res;
         }
     } while (find_account_by_pix(new_account->pix) != NULL);
@@ -237,8 +238,8 @@ struct response create_account(void *info_ptr)
         {
             printf("Create account request failed, could not generate Token UUID\n");
 
-            res.success = 0;
-            strcpy(res.response, "Não foi possível realizar o cadastro");
+            res->success = 0;
+            strcpy(res->response, "Não foi possível realizar o cadastro");
             return final_res;
         }
     } while (find_account_by_token(new_account->token) != NULL);
@@ -258,10 +259,10 @@ struct response create_account(void *info_ptr)
         last->next = new_account;
     }
 
-    res.success = 1;
-    strcpy(res.response, "Conta cadastrada com sucesso");
-    strcpy(res.pix, new_account->pix);
-    strcpy(res.token, new_account->token);
+    res->success = 1;
+    strcpy(res->response, "Conta cadastrada com sucesso");
+    strcpy(res->pix, new_account->pix);
+    strcpy(res->token, new_account->token);
 
     printf("New account ID %s created\n", new_account->pix);
     return final_res;
