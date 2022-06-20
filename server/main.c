@@ -12,6 +12,7 @@
 #include "sockets.h"
 #include "account.h"
 #include "transactions.h"
+#include <time.h>
 
 typedef response (*func)(void *info);
 typedef struct method
@@ -23,11 +24,15 @@ typedef struct method
 
 int main()
 {
+    srand(time(NULL));
+
     struct method methods[] = {
         {.name = "Register", .struct_size = sizeof(new_account), .function = create_account},
+        {.name = "SignIn", .struct_size = sizeof(login), .function = sign_in},
+        {.name = "Info", .struct_size = sizeof(account_info), .function = check_info},
         {.name = "Deposit", .struct_size = sizeof(deposit), .function = make_deposit},
         {.name = "Withdraw", .struct_size = sizeof(withdraw), .function = make_withdraw},
-        {.name = "SignIn", .struct_size = sizeof(login), .function = sign_in}
+        {.name = "Transfer", .struct_size = sizeof(transfer), .function = make_transfer},
     };
     int num_of_methods = sizeof(methods) / sizeof(method);
 
@@ -67,7 +72,7 @@ int main()
         bzero(data, MAX_STREAM_SIZE);
         receive_message(accept_socket_id, data, MAX_STREAM_SIZE);
 
-        char *method = malloc(sizeof(char) * METHOD_SIZE);
+        char *method = malloc(METHOD_SIZE);
         bzero(method, METHOD_SIZE);
         memcpy(method, data, METHOD_SIZE);
 
@@ -91,6 +96,7 @@ int main()
                 if (res.response_str != NULL)
                 {
                     send_message(accept_socket_id, res.response_str, res.response_size);
+                    free(res.response_str);
                 }
 
                 free(info);

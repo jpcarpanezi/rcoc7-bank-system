@@ -45,6 +45,20 @@ typedef struct login_response
     int success;
 } login_response;
 
+typedef struct account_info
+{
+    char token[37];
+} account_info;
+
+typedef struct account_info_response
+{
+    char name[100];
+    char pix[37];
+    char balance[50];
+    char response[100];
+    int success;
+} account_info_response;
+
 typedef struct account
 {
     char pix[37];
@@ -334,6 +348,40 @@ struct response sign_in(void *info_ptr)
     strcpy(res->token, uuid);
     strcpy(acc->token, uuid);
     printf("Successfuly login in account ID %s\n", acc->pix);
+
+    return final_res;
+}
+
+struct response check_info(void *info_ptr)
+{
+    struct account_info *acc_info = (struct account_info *)info_ptr;
+
+    struct account_info_response *res = malloc(sizeof(struct account_info_response));
+    bzero(res, sizeof(struct account_info_response));
+    struct response final_res;
+
+    final_res.response_str = res;
+    final_res.response_size = sizeof(struct account_info_response);
+
+    struct account *acc = find_account_by_token(acc_info->token);
+    if (acc == NULL)
+    {
+        res->success = 0;
+        strcpy(res->response, "Conta não encontrada");
+
+        return final_res;
+    }
+
+    double balance = ((double)acc->balance) / 100;
+    char balance_str[50];
+    snprintf(balance_str, sizeof(balance_str), "%.2f", balance);
+    char balance_response[50] = "R$ ";
+
+    res->success = 1;
+    strcpy(res->response, "Dados encontrados com sucesso");
+    strcpy(res->name, acc->name);
+    strcpy(res->pix, acc->pix);
+    strcpy(res->balance, strcat(balance_response, balance_str));
 
     return final_res;
 }

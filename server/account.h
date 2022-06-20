@@ -24,6 +24,11 @@ typedef struct login
     char password[50];
 } login;
 
+typedef struct account_info
+{
+    char token[37];
+} account_info;
+
 typedef struct response
 {
     void *response_str;
@@ -35,3 +40,4 @@ struct account *find_account_by_cpf(char cpf[]);
 struct account *find_account_by_pix(char pix[]);
 struct account *find_account_by_token(char token[]);
 struct response sign_in(void *info_ptr);
+struct response check_info(void *info_ptr);
