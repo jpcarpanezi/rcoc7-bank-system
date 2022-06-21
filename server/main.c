@@ -17,15 +17,17 @@
 typedef response (*func)(void *info);
 typedef struct method
 {
-    char name[100];
-    size_t struct_size;
-    func function;
+    char name[100];     // Nome do método
+    size_t struct_size; // Tamanho esperado da struct com os parâmetros
+    func function;      // Ponteiro para função a ser chamada
 } method;
 
 int main()
 {
+    // Utiliza o tempo atual para como semente para o gerador de números aleatórios
     srand(time(NULL));
 
+    // Métodos disponíveis para serem utilizados pelo cliente
     struct method methods[] = {
         {.name = "Register", .struct_size = sizeof(new_account), .function = create_account},
         {.name = "SignIn", .struct_size = sizeof(login), .function = sign_in},
@@ -57,6 +59,7 @@ int main()
         int c = sizeof(struct sockaddr_in);
         struct sockaddr client;
 
+        // Aceita conexão de entrada
         int accept_socket_id = accept(sock_id, (struct sockaddr *)&client, (socklen_t *)&c);
         if (accept_socket_id < 0)
         {
@@ -69,18 +72,25 @@ int main()
         inet_ntop(client.sa_family, addr, client_ip, INET6_ADDRSTRLEN);
         printf("Connection received from %s\n", client_ip);
 
+        // Alocação de espaço para recebimento da mensagem
         void *data = malloc(MAX_STREAM_SIZE);
         bzero(data, MAX_STREAM_SIZE);
+
+        // Recebimento da mensagem com o método desejado e os parâmetros do método
         receive_message(accept_socket_id, data, MAX_STREAM_SIZE);
 
+        // Alocação de espaço para copiar o nome do método
         char *method = malloc(METHOD_SIZE);
         bzero(method, METHOD_SIZE);
+
+        // Cópia da variável data para a variável method com tamanho METHOD_SIZE
         memcpy(method, data, METHOD_SIZE);
 
         printf("Received method %s\n", method);
 
         fflush(stdout);
 
+        // Busca se o método informado está disponível
         int method_found = 0;
         for (int i = 0; i < num_of_methods; i++)
         {
@@ -88,23 +98,32 @@ int main()
             {
                 method_found = 1;
 
+                // Alocação de espaço para copiar os parâmetros do método
                 void *info = malloc(methods[i].struct_size);
                 bzero(info, methods[i].struct_size);
+
+                // Cópia da variável data para a variável info, iniciando em data + METHOD_SIZE
                 memcpy(info, data + METHOD_SIZE, methods[i].struct_size);
 
+                // Chamada do método e atribuição da struct de resposta
                 struct response res = methods[i].function(info);
 
                 if (res.response_str != NULL)
                 {
+                    // Envia a resposta do método
                     send_message(accept_socket_id, res.response_str, res.response_size);
+
+                    // Libera a memória utilizada pela struct de resposta do método
                     free(res.response_str);
                 }
 
+                // Libera a memória utilizada pelos parâmetros do método
                 free(info);
                 break;
             }
         }
 
+        // Libera a memória utilizada pelo nome do método e a mensagem recebida
         free(data);
         free(method);
 
@@ -113,6 +132,7 @@ int main()
             printf("Invalid method submitted\n");
         }
 
+        // Fecha a conexão
         close(accept_socket_id);
 
         printf("Closed connection\n\n");

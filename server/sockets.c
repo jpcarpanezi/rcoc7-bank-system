@@ -17,6 +17,12 @@
 #define MAX_STREAM_SIZE 10000
 #define METHOD_SIZE sizeof(char) * 100
 
+/**
+ * @brief Cria um socket.
+ * Encerra o programa com o código 1 caso não seja possível criar o socket
+ *
+ * @return ID do socket criado
+ */
 int create_socket()
 {
     int sock_id = socket(AF_INET, SOCK_STREAM, 0);
@@ -31,7 +37,14 @@ int create_socket()
     return sock_id;
 }
 
-int connect_socket(int sock_id)
+/**
+ * @brief Realiza a conexão a um socket.
+ * Utiliza o IP definido em SERVER_ADDRESS e porta definida em SERVER_PORT.
+ * Encerra o programa com o código 1 caso não seja possível conectar o socket
+ *
+ * @param sock_id ID do socket a ser conectado
+ */
+void connect_socket(int sock_id)
 {
     struct sockaddr_in sock;
     bzero(&(sock), sizeof(sock));
@@ -51,10 +64,14 @@ int connect_socket(int sock_id)
     }
 
     printf("Socket connected\n");
-
-    return con;
 }
 
+/**
+ * @brief Vincula o socket a porta definida em SERVER_PORT
+ * Encerra o programa com o código 1 caso não seja possível vinular a porta
+ *
+ * @param sock_id ID do socket a ser vinculado
+ */
 void bind_port(int sock_id)
 {
     struct sockaddr_in server;
@@ -73,12 +90,23 @@ void bind_port(int sock_id)
     }
 }
 
+/**
+ * @brief Configura o socket para ser reutilizável
+ *
+ * @param sock_id ID do socket a ser configurado
+ */
 void set_socket_for_reuse(int sock_id)
 {
     int option = 1;
     setsockopt(sock_id, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 }
 
+/**
+ * @brief Prepara o socket para aceitar pedidos de conexão
+ * Encerra o programa com o código 1 caso não seja possível preparar o socket
+ *
+ * @param sock_id ID do socket a ser preparado
+ */
 void listen_socket(int sock_id)
 {
     if (listen(sock_id, LISTEN_BACKLOG) < 0)
@@ -90,6 +118,14 @@ void listen_socket(int sock_id)
     }
 }
 
+/**
+ * @brief Envia uma mensagem através do socket especificado
+ *
+ * @param sock_id ID do socket para envio da mensagem
+ * @param message Mensagem a ser enviada
+ * @param message_size Tamanho da mensagem a ser enviada
+ * @return 0 caso o envio seja bem sucedido, 1 caso não seja
+ */
 int send_message(int sock_id, void *message, int message_size)
 {
     int msg = send(sock_id, message, message_size, 0);
@@ -105,6 +141,14 @@ int send_message(int sock_id, void *message, int message_size)
     return 0;
 }
 
+/**
+ * @brief Recebe uma mensagem através do socket especificado
+ *
+ * @param sock_id ID do socket para recebimento da mensagem
+ * @param message Ponteiro para armazenamento da mensagem recebida
+ * @param message_size Tamanho máximo que pode ser armazenado no parâmetro message
+ * @return 0 caso o recebimento seja bem sucedido, 1 caso não seja
+ */
 int receive_message(int sock_id, void *message, int message_size)
 {
     int msg = recv(sock_id, message, message_size, 0);
@@ -120,6 +164,12 @@ int receive_message(int sock_id, void *message, int message_size)
     return 0;
 }
 
+/**
+ * @brief Busca a struct de tipo sin_addr ou sin6_addr dentro de uma struct sockaddr
+ *
+ * @param sa Struct sockaddr a ser buscada
+ * @return Ponteiro para uma struct do tipo sin_addr ou sin6_addr
+ */
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET)
