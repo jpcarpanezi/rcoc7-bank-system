@@ -19,6 +19,7 @@
 #define DEPOSIT_METHOD "Deposit"
 #define WITHDRAW_METHOD "Withdraw"
 #define TRANSFER_METHOD "Transfer"
+#define LIST_BANK_STATEMENT_METHOD "ListBankStatement"
 
 #define PAGE_SIZE 10
 
@@ -131,6 +132,18 @@ typedef struct list_account_response
     unsigned int total_count;
     char accounts[PAGE_SIZE][37];
 } list_account_response;
+
+typedef struct list_bank_statement {
+    char token[37];
+    unsigned int page;
+} list_bank_statement;
+
+typedef struct list_bank_statement_response {
+    unsigned int page_index;
+    unsigned int current_page_size;
+    unsigned int total_count;
+    char value[PAGE_SIZE][100];
+} list_bank_statemente_response;
 
 void create_account(int sock_id, int secondary)
 {
@@ -264,6 +277,43 @@ void make_transfer(int sock_id)
     receive_message(sock_id, response, sizeof(struct transfer_response));
 
     printf("Success: %d\nResponse: %s\n\n", response->success, response->response);
+}
+
+void get_bank_statement(int sock_id, unsigned int page) {
+    struct list_bank_statement info;
+    bzero(&(info), sizeof(info));
+    info.page = page;
+    strcpy(info.token, acc_token);
+
+    size_t size = METHOD_SIZE + sizeof(info);
+    void *data = malloc(size);
+    bzero(data, METHOD_SIZE);
+
+    char *method = malloc(METHOD_SIZE);
+    bzero(method, METHOD_SIZE);
+    strcpy(method, LIST_BANK_STATEMENT_METHOD);
+
+    memcpy(data, method, METHOD_SIZE);
+    memcpy(data + METHOD_SIZE, &(info), sizeof(info));
+
+    send_message(sock_id, data, size);
+
+    printf("Sent message asdasdas\n");
+
+    struct list_bank_statement_response *response = malloc(sizeof(struct list_bank_statement_response));
+    bzero(response, sizeof(struct list_bank_statement_response));
+    receive_message(sock_id, response, sizeof(struct list_bank_statement_response));
+
+    printf("Page index: %u\n", response->page_index);
+    printf("Current page size: %u\n", response->current_page_size);
+    printf("Total count: %u\n", response->total_count);
+
+    for (int i = 0; i < response->current_page_size; i++)
+    {
+        printf("%i: %s\n", i, response->value[i]);
+    }
+
+    printf("\n");   
 }
 
 void sign_in(int sock_id)
@@ -418,5 +468,10 @@ int main()
     sock_id = create_socket();
     connect_socket(sock_id);
     list_accounts(sock_id, 0);
+
+    sock_id = create_socket();
+    connect_socket(sock_id);
+    get_bank_statement(sock_id, 0);
+
     return 0;
 }
