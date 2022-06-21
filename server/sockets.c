@@ -59,11 +59,11 @@ void connect_socket(int sock_id)
     if (con < 0)
     {
         int err = errno;
-        printf("Failed to connect to socket with error %s (%i)\n", errnoname(err), err);
+        printf("Socket %i: Failed to connect to socket with error %s (%i)\n", sock_id, errnoname(err), err);
         exit(1);
     }
 
-    printf("Socket connected\n");
+    printf("Socket %i connected\n", sock_id);
 }
 
 /**
@@ -84,7 +84,7 @@ void bind_port(int sock_id)
     if (bind(sock_id, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
         int err = errno;
-        printf("Failed to bind port with error %s (%i)\n", errnoname(err), err);
+        printf("Socket %i: Failed to bind port with error %s (%i)\n", sock_id, errnoname(err), err);
         close(sock_id);
         exit(1);
     }
@@ -112,7 +112,7 @@ void listen_socket(int sock_id)
     if (listen(sock_id, LISTEN_BACKLOG) < 0)
     {
         int err = errno;
-        printf("Failed to listen to socket with error %s (%i)\n", errnoname(err), err);
+        printf("Socket %i: Failed to listen to socket with error %s (%i)\n", sock_id, errnoname(err), err);
         close(sock_id);
         exit(1);
     }
@@ -132,11 +132,11 @@ int send_message(int sock_id, void *message, int message_size)
     if (msg == -1)
     {
         int err = errno;
-        printf("Failed to send message with error %s (%i)\n", errnoname(err), err);
+        printf("Socket %i: Failed to send message with error %s (%i)\n", sock_id, errnoname(err), err);
         return 1;
     }
 
-    printf("Message with size %d sent\n", message_size);
+    printf("Socket %i: Message with size %d sent\n", sock_id, message_size);
 
     return 0;
 }
@@ -156,11 +156,11 @@ int receive_message(int sock_id, void *message, int message_size)
     if (msg == -1)
     {
         int err = errno;
-        printf("Failed to receive message with error %s (%i)\n", errnoname(err), err);
+        printf("Socket %i: Failed to receive message with error %s (%i)\n", sock_id, errnoname(err), err);
         return 1;
     }
 
-    printf("Received message with size %i\n", msg);
+    printf("Socket %i: Received message with size %i\n", sock_id, msg);
     return 0;
 }
 

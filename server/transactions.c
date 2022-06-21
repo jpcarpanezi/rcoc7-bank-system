@@ -188,6 +188,11 @@ struct response get_bank_statement(void *info_ptr)
     final_res.response_str = res;
     final_res.response_size = sizeof(struct list_bank_statement_response);
 
+    if (acc == NULL)
+    {
+        return final_res;
+    }
+
     res->page_index = list->page;
     res->current_page_size = 0;
 
