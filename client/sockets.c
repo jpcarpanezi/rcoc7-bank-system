@@ -39,12 +39,13 @@ int create_socket()
 
 /**
  * @brief Realiza a conexão a um socket.
- * Utiliza o IP definido em SERVER_ADDRESS e porta definida em SERVER_PORT.
+ * Utiliza o IP fornecido e porta definida em SERVER_PORT.
  * Encerra o programa com o código 1 caso não seja possível conectar o socket
  *
  * @param sock_id ID do socket a ser conectado
+ * @param server_ip IP do servidor a ser conectado
  */
-void connect_socket(int sock_id)
+void connect_socket(int sock_id, char *server_ip)
 {
     struct sockaddr_in sock;
     bzero(&(sock), sizeof(sock));
@@ -52,7 +53,7 @@ void connect_socket(int sock_id)
     sock.sin_family = AF_INET;
     sock.sin_port = htons(SERVER_PORT);
 
-    inet_pton(AF_INET, SERVER_ADDRESS, &sock.sin_addr);
+    inet_pton(AF_INET, server_ip, &sock.sin_addr);
 
     int con = connect(sock_id, (struct sockaddr *)&sock, sizeof(sock));
 
@@ -62,8 +63,6 @@ void connect_socket(int sock_id)
         printf("Socket %i: Failed to connect to socket with error %s (%i)\n", sock_id, errnoname(err), err);
         exit(1);
     }
-
-    printf("Socket %i connected\n", sock_id);
 }
 
 /**
@@ -136,8 +135,6 @@ int send_message(int sock_id, void *message, int message_size)
         return 1;
     }
 
-    printf("Socket %i: Message with size %d sent\n", sock_id, message_size);
-
     return 0;
 }
 
@@ -160,7 +157,6 @@ int receive_message(int sock_id, void *message, int message_size)
         return 1;
     }
 
-    printf("Socket %i: Received message with size %i\n", sock_id, msg);
     return 0;
 }
 

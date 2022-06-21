@@ -10,147 +10,16 @@
 #include <errno.h>
 #include "errnoname.h"
 #include "sockets.h"
-#include <time.h>
+#include "account.h"
+#include "transactions.h"
+#include "methods.h"
 
-#define REGISTER_METHOD "Register"
-#define LOGIN_METHOD "SignIn"
-#define ACCOUNT_INFO_METHOD "Info"
-#define LIST_ACCOUNTS_METHOD "List"
-#define DEPOSIT_METHOD "Deposit"
-#define WITHDRAW_METHOD "Withdraw"
-#define TRANSFER_METHOD "Transfer"
-#define LIST_BANK_STATEMENT_METHOD "ListBankStatement"
-
-#define PAGE_SIZE 10
-
-typedef struct new_account
-{
-    char name[100];
-    char cpf[12];
-    char password[50];
-} new_account;
-
-typedef struct new_account_response
-{
-    char pix[37];
-    char token[37];
-    char response[100];
-    int success;
-} new_account_response;
-
-typedef struct deposit
-{
-    double value;
-    char token[37];
-} deposit;
-
-typedef struct deposit_response
-{
-    char response[100];
-    int success;
-} deposit_response;
-
-typedef struct withdraw
-{
-    double value;
-    char token[37];
-} withdraw;
-
-typedef struct withdraw_response
-{
-    char response[100];
-    int success;
-} withdraw_response;
-
-typedef struct transfer
-{
-    double value;
-    char token[37];
-    char destination_account_pix[37];
-} transfer;
-
-typedef struct transfer_response
-{
-    char response[100];
-    int success;
-} transfer_response;
-
-char acc_token[37];
-char secondary_acc_pix[37];
-
-char *gerar_cpf()
-{
-    char cpfs[][12] = {
-        "11111111111"};
-
-    size_t size = sizeof(cpfs) / sizeof(cpfs[0]);
-
-    int rdm = rand();
-    int index = rdm % (size);
-
-    char *ret = malloc(sizeof(char) * 12);
-    strcpy(ret, cpfs[index]);
-    return ret;
-}
-typedef struct login
-{
-    char cpf[12];
-    char password[50];
-} login;
-
-typedef struct login_response
-{
-    char token[37];
-    char response[100];
-    int success;
-} login_response;
-
-typedef struct account_info
-{
-    char token[37];
-} account_info;
-
-typedef struct account_info_response
-{
-    char name[100];
-    char pix[37];
-    char balance[50];
-    char response[100];
-    int success;
-} account_info_response;
-
-typedef struct list_account
-{
-    unsigned int page;
-} list_account;
-
-typedef struct list_account_response
-{
-    unsigned int page_index;
-    unsigned int current_page_size;
-    unsigned int total_count;
-    char accounts[PAGE_SIZE][37];
-} list_account_response;
-
-typedef struct list_bank_statement
-{
-    char token[37];
-    unsigned int page;
-} list_bank_statement;
-
-typedef struct list_bank_statement_response
-{
-    unsigned int page_index;
-    unsigned int current_page_size;
-    unsigned int total_count;
-    char value[PAGE_SIZE][100];
-} list_bank_statemente_response;
-
+/* TEST FUNCTIONS
 void create_account(int sock_id, int secondary)
 {
     struct new_account acc;
     bzero(&(acc), sizeof(acc));
-    strcpy(acc.cpf, gerar_cpf());
+    strcpy(acc.cpf, "111111111111");
     printf("CPF: %s\n", acc.cpf);
     strcpy(acc.name, "MEU NOMBRE");
     strcpy(acc.password, "12345");
@@ -422,58 +291,114 @@ void list_accounts(int sock_id, unsigned int page)
 
     printf("\n");
 }
+*/
+
+
+void abrir_menu()
+{
+    char account_token[37];
+    int logged_in = 0;
+
+    while (1)
+    {
+        printf("\n********************** m e n u *******************\n");
+        printf("|                                                 |\n");
+        printf("| Conta:                                          |\n");
+        printf("|   1 - Cadastrar conta                           |\n");
+        printf("|   2 - Realizar login                            |\n");
+        printf("|   3 - Listar contas                             |\n");
+        printf("|   4 - Exibir informações da conta               |\n");
+        printf("|                                                 |\n");
+        printf("| Transações:                                     |\n");
+        printf("|   5 - Depósito                                  |\n");
+        printf("|   6 - Saque                                     |\n");
+        printf("|   7 - Transferência                             |\n");
+        printf("|   8 - Verificar extrato                         |\n");
+        printf("|                                                 |\n");
+        printf("| Outros:                                         |\n");
+        printf("|   9 - Sair                                      |\n");
+        printf("|                                                 |\n");
+        printf("***************************************************\n");
+        printf("Selecione uma opção: ");
+
+        int choice;
+        scanf("%i", &choice);
+
+        printf("\n");
+
+        if (logged_in == 0)
+        {
+            int fail = 0;
+            const int logged_in_methods[] = {4, 5, 6, 7, 8};
+            for (int i = 0; i < sizeof(logged_in_methods) / sizeof(logged_in_methods[0]); i++)
+            {
+                if (logged_in_methods[i] == choice)
+                {
+                    printf("É necessário fazer login para realizar esta função\n");
+                    fail = 1;
+                    break;
+                }
+            }
+
+            if (fail)
+            {
+                continue;
+            }
+        }
+
+        switch (choice)
+        {
+        case 1: // Cadastrar conta
+            create_account();
+            break;
+        case 2: // Realizar login
+            char *token = sign_in();
+            if (token != NULL)
+            {
+                strcpy(account_token, token);
+                printf("Token: %s", account_token);
+            }
+            break;
+        case 3: // Listar contas
+            
+            break;
+        case 4: // Exibir informações da conta
+            
+            break;
+        case 5: // Depósito
+            
+            break;
+        case 6: // Saque
+            
+            break;
+        case 7: // Transferência
+            
+            break;
+        case 8: // Verificar extrato
+            
+            break;
+        case 9: // Sair
+            exit(0);
+            break;
+        default:
+            printf("Opção inválida. Tente novamente:\n");
+            break;
+        }
+    }
+}
 
 int main()
 {
-    srand(time(NULL));
+    printf("Digite o endereço IP do servidor, ou digite 1 para utilizar 127.0.0.1:\n");
+    
+    scanf("%s", server_ip);
 
-    int sock_id = create_socket();
-    connect_socket(sock_id);
-    create_account(sock_id, 0);
+    if (strcmp("1", server_ip) == 0)
+    {
+        strcpy(server_ip, "127.0.0.1");
+    }
 
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    create_account(sock_id, 1);
-
-    // sock_id = create_socket();
-    // connect_socket(sock_id);
-    // sign_in(sock_id);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    check_info(sock_id);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    make_deposit(sock_id);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    check_info(sock_id);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    make_withdraw(sock_id);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    check_info(sock_id);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    make_transfer(sock_id);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    check_info(sock_id);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    list_accounts(sock_id, 0);
-
-    sock_id = create_socket();
-    connect_socket(sock_id);
-    get_bank_statement(sock_id, 0);
+    abrir_menu();
 
     return 0;
 }

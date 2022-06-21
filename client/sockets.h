@@ -5,7 +5,7 @@
 #define METHOD_SIZE sizeof(char) * 100
 
 int create_socket();
-int connect_socket(int sock_id);
+void connect_socket(int sock_id, char *server_ip);
 void bind_port(int sock_id);
 void set_socket_for_reuse(int sock_id);
 void listen_socket(int sock_id);
