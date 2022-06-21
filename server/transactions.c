@@ -11,6 +11,15 @@
 #include "errnoname.h"
 #include "sockets.h"
 #include "account.h"
+#include <math.h>
+
+#define PAGE_SIZE 10
+
+typedef enum {
+    Deposit,
+    Withdraw,
+    Transfer
+} transaction_type;
 
 typedef struct deposit
 {
@@ -49,6 +58,110 @@ typedef struct transfer_response
     int success;
 } transfer_response;
 
+typedef struct bank_statement {
+    char destination_account_pix[37];
+    char origin_account_pix[37];
+    int value;
+    transaction_type type;
+    struct bank_statement *next;
+} bank_statement;
+
+typedef struct list_bank_statement {
+    char token[37];
+    unsigned int page;
+} list_bank_statement;
+
+typedef struct list_bank_statement_response {
+    unsigned int page_index;
+    unsigned int current_page_size;
+    unsigned int total_count;
+    char value[PAGE_SIZE][100];
+} list_bank_statemente_response;
+
+struct bank_statement *bank_statement_head = NULL;
+
+void add_to_bank_statement(char destination_account_pix[], char origin_account_pix[], int value, transaction_type type) {
+    struct bank_statement *new_bank_statement = malloc(sizeof(struct bank_statement));
+    bzero(new_bank_statement, sizeof(struct bank_statement));
+
+    new_bank_statement->value = value;
+    new_bank_statement->type = type;
+    strcpy(new_bank_statement->destination_account_pix, destination_account_pix);
+    strcpy(new_bank_statement->origin_account_pix, origin_account_pix);
+
+    if (bank_statement_head == NULL) {
+        bank_statement_head = new_bank_statement;
+    } else {
+        struct bank_statement *last = bank_statement_head;
+        
+        while (last->next != NULL) {
+            last = last->next;
+        }
+
+        last->next = new_bank_statement;
+    }
+
+    return;
+}
+
+struct response get_bank_statement(void *info_ptr) {
+    struct list_bank_statement *list = (struct list_bank_statement *)info_ptr;
+
+    struct list_bank_statement_response *res = malloc(sizeof(struct list_bank_statement_response));
+    bzero(res, sizeof(struct list_bank_statement_response));
+    struct response final_res;
+
+    struct account *acc = find_account_by_token(list->token);
+
+    final_res.response_str = res;
+    final_res.response_size = sizeof(struct list_bank_statement_response);
+
+    res->page_index = list->page;
+    res->current_page_size = 0;
+
+    struct bank_statement *bs = bank_statement_head;
+    unsigned int i = 0;
+
+    while (bs != NULL) {
+        unsigned int current_page = (unsigned int)ceil(i / PAGE_SIZE);
+
+        if (current_page == res->page_index && (strcmp(bs->destination_account_pix, acc->pix) == 0 || strcmp(bs->origin_account_pix, acc->pix) == 0)) {
+            double value = 0.0;
+            switch (bs->type) {
+                case Deposit:
+                    value += ((double)bs->value) / 100;
+                    break;
+                case Withdraw:
+                    value -= ((double)bs->value) / 100;
+                    break;
+                case Transfer:
+                    if (strcmp(bs->origin_account_pix, acc->pix) == 0) {
+                        value -= ((double)bs->value) / 100;
+                    } else {
+                        value += ((double)bs->value) / 100;
+                    }
+                    break;
+                default:
+                    value += ((double)bs->value) / 100;
+                    break;
+            }
+            
+            char value_str[50];
+            snprintf(value_str, sizeof(value_str), "%.2f", value);
+            char value_response[50] = "R$ ";
+            strcpy(res->value[res->current_page_size], strcat(value_response, value_str));
+            res->current_page_size++;
+        }
+
+        i++;
+        bs = bs->next;
+    }
+
+    res->total_count = i;
+
+    return final_res;
+}
+
 struct response make_deposit(void *info_ptr)
 {
     struct deposit *info = (struct deposit *)info_ptr;
@@ -76,6 +189,8 @@ struct response make_deposit(void *info_ptr)
         strcpy(res->response, "Valor inválido");
         return final_res;
     }
+
+    add_to_bank_statement(acc->pix, "", value, Deposit);
 
     acc->balance += value;
 
@@ -125,6 +240,8 @@ struct response make_withdraw(void *info_ptr)
         strcpy(res->response, "Valor informado maior que o saldo disponível");
         return final_res;
     }
+
+    add_to_bank_statement(acc->pix, "", value, Withdraw);
 
     acc->balance -= value;
 
@@ -183,6 +300,7 @@ struct response make_transfer(void *info_ptr)
         return final_res;
     }
 
+    add_to_bank_statement(destination_acc->pix, acc->pix, value, Deposit);
     acc->balance -= value;
     destination_acc->balance += value;
 
