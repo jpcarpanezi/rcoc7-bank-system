@@ -30,6 +30,7 @@ int main()
         {.name = "Register", .struct_size = sizeof(new_account), .function = create_account},
         {.name = "SignIn", .struct_size = sizeof(login), .function = sign_in},
         {.name = "Info", .struct_size = sizeof(account_info), .function = check_info},
+        {.name = "List", .struct_size = sizeof(list_account), .function = list_accounts},
         {.name = "Deposit", .struct_size = sizeof(deposit), .function = make_deposit},
         {.name = "Withdraw", .struct_size = sizeof(withdraw), .function = make_withdraw},
         {.name = "Transfer", .struct_size = sizeof(transfer), .function = make_transfer},

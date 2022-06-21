@@ -10,6 +10,9 @@
 #include <errno.h>
 #include "errnoname.h"
 #include "sockets.h"
+#include <math.h>
+
+#define PAGE_SIZE 10
 
 typedef struct response
 {
@@ -58,6 +61,20 @@ typedef struct account_info_response
     char response[100];
     int success;
 } account_info_response;
+
+typedef struct list_account
+{
+    unsigned int page;
+} list_account;
+
+typedef struct list_account_response
+{
+    unsigned int page_index;
+    unsigned int page_size;
+    unsigned int current_page_size;
+    unsigned int total_count;
+    char accounts[PAGE_SIZE][37];
+} list_account_response;
 
 typedef struct account
 {
@@ -382,6 +399,42 @@ struct response check_info(void *info_ptr)
     strcpy(res->name, acc->name);
     strcpy(res->pix, acc->pix);
     strcpy(res->balance, strcat(balance_response, balance_str));
+
+    return final_res;
+}
+
+struct response list_accounts(void *info_ptr)
+{
+    struct list_account *acc_info = (struct list_account *)info_ptr;
+
+    struct list_account_response *res = malloc(sizeof(struct list_account_response));
+    bzero(res, sizeof(struct list_account_response));
+    struct response final_res;
+
+    final_res.response_str = res;
+    final_res.response_size = sizeof(struct list_account_response);
+
+    res->page_index = acc_info->page;
+    res->page_size = PAGE_SIZE;
+    
+    res->current_page_size = 0;
+    
+    struct account *acc = head;
+    unsigned int i = 0;
+    while (acc != NULL)
+    {
+        unsigned int current_page = (unsigned int)ceil(i / PAGE_SIZE);
+        if (current_page == res->page_index)
+        {
+            strcpy(res->accounts[res->current_page_size], acc->pix);
+            res->current_page_size++;
+        }
+
+        i++;
+        acc = acc->next;
+    }
+
+    res->total_count = i;
 
     return final_res;
 }

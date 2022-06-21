@@ -15,9 +15,12 @@
 #define REGISTER_METHOD "Register"
 #define LOGIN_METHOD "SignIn"
 #define ACCOUNT_INFO_METHOD "Info"
+#define LIST_ACCOUNTS_METHOD "List"
 #define DEPOSIT_METHOD "Deposit"
 #define WITHDRAW_METHOD "Withdraw"
 #define TRANSFER_METHOD "Transfer"
+
+#define PAGE_SIZE 10
 
 typedef struct new_account
 {
@@ -77,29 +80,7 @@ char secondary_acc_pix[37];
 char *gerar_cpf()
 {
     char cpfs[][12] = {
-        "11529137004",
-        "94088831012",
-        "14418777032",
-        "77859229005",
-        "23606689004",
-        "27288851095",
-        "98787447010",
-        "85839138037",
-        "13750786070",
-        "79417837036",
-        "60093889020",
-        "61316773019",
-        "95094217070",
-        "30192886061",
-        "10600044025",
-        "27534520088",
-        "62180757026",
-        "86857732027",
-        "66424106022",
-        "52163983099",
-        "86011783082",
-        "66357725021",
-        "29656868005",
+        "11111111111"
     };
 
     size_t size = sizeof(cpfs) / sizeof(cpfs[0]);
@@ -137,6 +118,20 @@ typedef struct account_info_response
     char response[100];
     int success;
 } account_info_response;
+
+typedef struct list_account
+{
+    unsigned int page;
+} list_account;
+
+typedef struct list_account_response
+{
+    unsigned int page_index;
+    unsigned int page_size;
+    unsigned int current_page_size;
+    unsigned int total_count;
+    char accounts[PAGE_SIZE][37];
+} list_account_response;
 
 void create_account(int sock_id, int secondary)
 {
@@ -340,6 +335,44 @@ void check_info(int sock_id)
     printf("Balance: %s\n\n", response->balance);
 }
 
+void list_accounts(int sock_id, unsigned int page)
+{
+    struct list_account info;
+    bzero(&(info), sizeof(info));
+    info.page = page;
+
+    size_t size = METHOD_SIZE + sizeof(info);
+    void *data = malloc(size);
+    bzero(data, METHOD_SIZE);
+
+    char *method = malloc(METHOD_SIZE);
+    bzero(method, METHOD_SIZE);
+    strcpy(method, LIST_ACCOUNTS_METHOD);
+
+    memcpy(data, method, METHOD_SIZE);
+    memcpy(data + METHOD_SIZE, &(info), sizeof(info));
+
+    send_message(sock_id, data, size);
+
+    printf("Sent message\n");
+
+    struct list_account_response *response = malloc(sizeof(struct list_account_response));
+    bzero(response, sizeof(struct list_account_response));
+    receive_message(sock_id, response, sizeof(struct list_account_response));
+
+    printf("Page index: %u\n", response->page_index);
+    printf("Page size: %u\n", response->page_size);
+    printf("Current page size: %u\n", response->current_page_size);
+    printf("Total count: %u\n", response->total_count);
+
+    for (int i = 0; i < response->current_page_size; i++)
+    {
+        printf("%i: %s\n", i, response->accounts[i]);
+    }
+
+    printf("\n");
+}
+
 int main()
 {
     srand(time(NULL));
@@ -383,5 +416,9 @@ int main()
     sock_id = create_socket();
     connect_socket(sock_id);
     check_info(sock_id);
+
+    sock_id = create_socket();
+    connect_socket(sock_id);
+    list_accounts(sock_id, 0);
     return 0;
 }
