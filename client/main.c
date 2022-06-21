@@ -127,7 +127,6 @@ typedef struct list_account
 typedef struct list_account_response
 {
     unsigned int page_index;
-    unsigned int page_size;
     unsigned int current_page_size;
     unsigned int total_count;
     char accounts[PAGE_SIZE][37];
@@ -361,7 +360,6 @@ void list_accounts(int sock_id, unsigned int page)
     receive_message(sock_id, response, sizeof(struct list_account_response));
 
     printf("Page index: %u\n", response->page_index);
-    printf("Page size: %u\n", response->page_size);
     printf("Current page size: %u\n", response->current_page_size);
     printf("Total count: %u\n", response->total_count);
 

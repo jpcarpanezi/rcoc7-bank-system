@@ -70,7 +70,6 @@ typedef struct list_account
 typedef struct list_account_response
 {
     unsigned int page_index;
-    unsigned int page_size;
     unsigned int current_page_size;
     unsigned int total_count;
     char accounts[PAGE_SIZE][37];
@@ -415,7 +414,6 @@ struct response list_accounts(void *info_ptr)
     final_res.response_size = sizeof(struct list_account_response);
 
     res->page_index = acc_info->page;
-    res->page_size = PAGE_SIZE;
     
     res->current_page_size = 0;
     
