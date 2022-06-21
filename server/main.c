@@ -89,7 +89,7 @@ void *process_connection(void *accept_socked_id_ptr)
 {
     // Realiza o cast de accept_socked_id_ptr para um inteiro com o ID do socket
     int accept_socket_id = *((int *)(accept_socked_id_ptr));
-    printf("Processing socket %i\n", accept_socket_id);
+    printf("Socket %i: Processing\n", accept_socket_id);
 
     // Métodos disponíveis para serem utilizados pelo cliente
     const struct method methods[] = {

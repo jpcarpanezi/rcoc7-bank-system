@@ -205,7 +205,14 @@ struct response get_bank_statement(void *info_ptr)
         unsigned int current_page = (unsigned int)ceil(i / PAGE_SIZE);
 
         // Verifica se a conta está presente na transação
-        if (current_page == res->page_index && (strcmp(bs->destination_account_pix, acc->pix) == 0 || strcmp(bs->origin_account_pix, acc->pix) == 0))
+        int is_dest = strcmp(bs->destination_account_pix, acc->pix);
+        int is_origin = strcmp(bs->origin_account_pix, acc->pix);
+        if (is_dest || is_origin)
+        {
+            i++;
+        }
+
+        if (current_page == res->page_index && (is_dest || is_origin))
         {
             // Valida se o usuário recebeu ou enviou o dinheiro
             double value = 0.0;
@@ -218,7 +225,7 @@ struct response get_bank_statement(void *info_ptr)
                 value -= ((double)bs->value) / 100;
                 break;
             case Transfer:
-                if (strcmp(bs->origin_account_pix, acc->pix) == 0)
+                if (is_origin == 0)
                 {
                     value -= ((double)bs->value) / 100;
                 }
@@ -240,7 +247,6 @@ struct response get_bank_statement(void *info_ptr)
             res->current_page_size++;
         }
 
-        i++;
         bs = bs->next;
     }
 
