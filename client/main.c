@@ -81,8 +81,7 @@ char secondary_acc_pix[37];
 char *gerar_cpf()
 {
     char cpfs[][12] = {
-        "11111111111"
-    };
+        "11111111111"};
 
     size_t size = sizeof(cpfs) / sizeof(cpfs[0]);
 
@@ -133,12 +132,14 @@ typedef struct list_account_response
     char accounts[PAGE_SIZE][37];
 } list_account_response;
 
-typedef struct list_bank_statement {
+typedef struct list_bank_statement
+{
     char token[37];
     unsigned int page;
 } list_bank_statement;
 
-typedef struct list_bank_statement_response {
+typedef struct list_bank_statement_response
+{
     unsigned int page_index;
     unsigned int current_page_size;
     unsigned int total_count;
@@ -279,7 +280,8 @@ void make_transfer(int sock_id)
     printf("Success: %d\nResponse: %s\n\n", response->success, response->response);
 }
 
-void get_bank_statement(int sock_id, unsigned int page) {
+void get_bank_statement(int sock_id, unsigned int page)
+{
     struct list_bank_statement info;
     bzero(&(info), sizeof(info));
     info.page = page;
@@ -313,7 +315,7 @@ void get_bank_statement(int sock_id, unsigned int page) {
         printf("%i: %s\n", i, response->value[i]);
     }
 
-    printf("\n");   
+    printf("\n");
 }
 
 void sign_in(int sock_id)
