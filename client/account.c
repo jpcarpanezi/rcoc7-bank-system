@@ -115,23 +115,29 @@ char *create_account()
     printf("Insira sua senha: ");
     scanf("%s", acc.password);
 
+    // Aloca o espaço necessário para enviar o nome do método + struct new_account
     size_t size = METHOD_SIZE + sizeof(acc);
     void *data = malloc(size);
     bzero(data, METHOD_SIZE);
 
+    // Aloca o espaço necessário e copia o nome do método
     char *method = malloc(METHOD_SIZE);
     bzero(method, METHOD_SIZE);
     strcpy(method, REGISTER_METHOD);
 
+    // Copia o nome do método e a struct para a variável data
     memcpy(data, method, METHOD_SIZE);
     memcpy(data + METHOD_SIZE, &(acc), sizeof(acc));
 
     int sock_id = create_socket();
     connect_socket(sock_id, server_ip);
+
     send_message(sock_id, data, size);
 
+    // Aloca o espaço necessário para a struct de resposta new_account_response
     struct new_account_response *response = malloc(sizeof(struct new_account_response));
     bzero(response, sizeof(struct new_account_response));
+
     receive_message(sock_id, response, sizeof(struct new_account_response));
 
     if (response->success)
@@ -155,22 +161,26 @@ char *sign_in()
     printf("Insira sua senha: ");
     scanf("%s", login.password);
 
-    int sock_id = create_socket();
-    connect_socket(sock_id, server_ip);
-
+    // Aloca o espaço necessário para enviar o nome do método + struct login
     size_t size = METHOD_SIZE + sizeof(login);
     void *data = malloc(size);
     bzero(data, METHOD_SIZE);
 
+    // Aloca o espaço necessário e copia o nome do método
     char *method = malloc(METHOD_SIZE);
     bzero(method, METHOD_SIZE);
     strcpy(method, LOGIN_METHOD);
 
+    // Copia o nome do método e a struct para a variável data
     memcpy(data, method, METHOD_SIZE);
     memcpy(data + METHOD_SIZE, &(login), sizeof(login));
 
+    int sock_id = create_socket();
+    connect_socket(sock_id, server_ip);
+
     send_message(sock_id, data, size);
 
+    // Aloca o espaço necessário para a struct de resposta login_response
     struct login_response *response = malloc(sizeof(struct login_response));
     bzero(response, sizeof(struct login_response));
     receive_message(sock_id, response, sizeof(struct login_response));
@@ -190,10 +200,12 @@ void list_accounts()
     struct list_account info;
     bzero(&(info), sizeof(info));
 
+    // Aloca o espaço necessário para enviar o nome do método + struct list_account
     size_t size = METHOD_SIZE + sizeof(info);
     void *data = malloc(size);
     bzero(data, METHOD_SIZE);
 
+    // Aloca o espaço necessário e copia o nome do método
     char *method = malloc(METHOD_SIZE);
     bzero(method, METHOD_SIZE);
     strcpy(method, LIST_ACCOUNTS_METHOD);
@@ -203,15 +215,19 @@ void list_accounts()
     {
         info.page = page;
 
+        // Copia o nome do método e a struct para a variável data
         memcpy(data, method, METHOD_SIZE);
         memcpy(data + METHOD_SIZE, &(info), sizeof(info));
 
         int sock_id = create_socket();
         connect_socket(sock_id, server_ip);
+        
         send_message(sock_id, data, size);
 
+        // Aloca o espaço necessário para a struct de resposta list_account_response
         struct list_account_response *response = malloc(sizeof(struct list_account_response));
         bzero(response, sizeof(struct list_account_response));
+
         receive_message(sock_id, response, sizeof(struct list_account_response));
 
         printf("Página atual: %u\n", response->page_index);
@@ -250,23 +266,29 @@ void show_account_info(char *account_token)
     bzero(&(info), sizeof(info));
     strcpy(info.token, account_token);
 
+    // Aloca o espaço necessário para enviar o nome do método + struct account_info
     size_t size = METHOD_SIZE + sizeof(info);
     void *data = malloc(size);
     bzero(data, METHOD_SIZE);
 
+    // Aloca o espaço necessário e copia o nome do método
     char *method = malloc(METHOD_SIZE);
     bzero(method, METHOD_SIZE);
     strcpy(method, ACCOUNT_INFO_METHOD);
 
+    // Copia o nome do método e a struct para a variável data
     memcpy(data, method, METHOD_SIZE);
     memcpy(data + METHOD_SIZE, &(info), sizeof(info));
 
     int sock_id = create_socket();
     connect_socket(sock_id, server_ip);
+
     send_message(sock_id, data, size);
 
+    // Aloca o espaço necessário para a struct de resposta account_info_response
     struct account_info_response *response = malloc(sizeof(struct account_info_response));
     bzero(response, sizeof(struct account_info_response));
+
     receive_message(sock_id, response, sizeof(struct account_info_response));
 
     if (response->success)

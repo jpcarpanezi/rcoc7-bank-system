@@ -130,14 +130,17 @@ void make_deposit(char *account_token)
     printf("Digite o valor que deseja depositar: ");
     scanf("%lf", &(deposit.value));
 
+    // Aloca o espaço necessário para enviar o nome do método + struct deposit
     size_t size = METHOD_SIZE + sizeof(deposit);
     void *data = malloc(size);
     bzero(data, METHOD_SIZE);
 
+    // Aloca o espaço necessário e copia o nome do método
     char *method = malloc(METHOD_SIZE);
     bzero(method, METHOD_SIZE);
     strcpy(method, DEPOSIT_METHOD);
 
+    // Copia o nome do método e a struct para a variável data
     memcpy(data, method, METHOD_SIZE);
     memcpy(data + METHOD_SIZE, &(deposit), sizeof(deposit));
 
@@ -145,6 +148,7 @@ void make_deposit(char *account_token)
     connect_socket(sock_id, server_ip);
     send_message(sock_id, data, size);
 
+    // Aloca o espaço necessário para a struct de resposta deposit_response
     struct deposit_response *response = malloc(sizeof(struct deposit_response));
     bzero(response, sizeof(struct deposit_response));
     receive_message(sock_id, response, sizeof(struct deposit_response));
@@ -161,23 +165,29 @@ void make_withdraw(char *account_token)
     printf("Digite o valor que deseja sacar: ");
     scanf("%lf", &(withdraw.value));
 
+    // Aloca o espaço necessário para enviar o nome do método + struct withdraw
     size_t size = METHOD_SIZE + sizeof(withdraw);
     void *data = malloc(size);
     bzero(data, METHOD_SIZE);
 
+    // Aloca o espaço necessário e copia o nome do método
     char *method = malloc(METHOD_SIZE);
     bzero(method, METHOD_SIZE);
     strcpy(method, WITHDRAW_METHOD);
 
+    // Copia o nome do método e a struct para a variável data
     memcpy(data, method, METHOD_SIZE);
     memcpy(data + METHOD_SIZE, &(withdraw), sizeof(withdraw));
 
     int sock_id = create_socket();
     connect_socket(sock_id, server_ip);
+
     send_message(sock_id, data, size);
 
+    // Aloca o espaço necessário para a struct de resposta withdraw_response
     struct withdraw_response *response = malloc(sizeof(struct withdraw_response));
     bzero(response, sizeof(struct withdraw_response));
+    
     receive_message(sock_id, response, sizeof(struct withdraw_response));
 
     printf("%s\n", response->response);
@@ -195,23 +205,29 @@ void make_transfer(char *account_token)
     printf("Insira a conta para qual deseja transferir: ");
     scanf("%s", transfer.destination_account_pix);
 
+    // Aloca o espaço necessário para enviar o nome do método + struct transfer
     size_t size = METHOD_SIZE + sizeof(transfer);
     void *data = malloc(size);
     bzero(data, METHOD_SIZE);
 
+    // Aloca o espaço necessário e copia o nome do método
     char *method = malloc(METHOD_SIZE);
     bzero(method, METHOD_SIZE);
     strcpy(method, TRANSFER_METHOD);
 
+    // Copia o nome do método e a struct para a variável data
     memcpy(data, method, METHOD_SIZE);
     memcpy(data + METHOD_SIZE, &(transfer), sizeof(transfer));
 
     int sock_id = create_socket();
     connect_socket(sock_id, server_ip);
+
     send_message(sock_id, data, size);
 
+    // Aloca o espaço necessário para a struct de resposta transfer_response
     struct transfer_response *response = malloc(sizeof(struct transfer_response));
     bzero(response, sizeof(struct transfer_response));
+
     receive_message(sock_id, response, sizeof(struct transfer_response));
 
     printf("%s\n", response->response);
@@ -223,10 +239,12 @@ void get_bank_statement(char *account_token)
     bzero(&(info), sizeof(info));
     strcpy(info.token, account_token);
 
+    // Aloca o espaço necessário para enviar o nome do método + struct list_bank_statement
     size_t size = METHOD_SIZE + sizeof(info);
     void *data = malloc(size);
     bzero(data, METHOD_SIZE);
 
+    // Aloca o espaço necessário e copia o nome do método
     char *method = malloc(METHOD_SIZE);
     bzero(method, METHOD_SIZE);
     strcpy(method, LIST_BANK_STATEMENT_METHOD);
@@ -237,15 +255,19 @@ void get_bank_statement(char *account_token)
     {
         info.page = page;
 
+        // Copia o nome do método e a struct para a variável data
         memcpy(data, method, METHOD_SIZE);
         memcpy(data + METHOD_SIZE, &(info), sizeof(info));
 
         int sock_id = create_socket();
         connect_socket(sock_id, server_ip);
+
         send_message(sock_id, data, size);
 
+        // Aloca o espaço necessário para a struct de resposta list_bank_statement_response
         struct list_bank_statement_response *response = malloc(sizeof(struct list_bank_statement_response));
         bzero(response, sizeof(struct list_bank_statement_response));
+        
         receive_message(sock_id, response, sizeof(struct list_bank_statement_response));
 
         printf("Página atual: %u\n", response->page_index);

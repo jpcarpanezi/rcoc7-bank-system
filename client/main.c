@@ -46,6 +46,7 @@ void abrir_menu()
 
         printf("\n");
 
+        // Verifica se é necessário estar logado para usar a função selecionada
         if (logged_in == 0)
         {
             int fail = 0;
