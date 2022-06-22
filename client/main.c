@@ -14,286 +14,6 @@
 #include "transactions.h"
 #include "methods.h"
 
-/* TEST FUNCTIONS
-void create_account(int sock_id, int secondary)
-{
-    struct new_account acc;
-    bzero(&(acc), sizeof(acc));
-    strcpy(acc.cpf, "111111111111");
-    printf("CPF: %s\n", acc.cpf);
-    strcpy(acc.name, "MEU NOMBRE");
-    strcpy(acc.password, "12345");
-
-    size_t size = METHOD_SIZE + sizeof(acc);
-    void *data = malloc(size);
-    bzero(data, METHOD_SIZE);
-
-    char *method = malloc(METHOD_SIZE);
-    bzero(method, METHOD_SIZE);
-    strcpy(method, REGISTER_METHOD);
-
-    memcpy(data, method, METHOD_SIZE);
-    memcpy(data + METHOD_SIZE, &(acc), sizeof(acc));
-
-    send_message(sock_id, data, size);
-
-    printf("Sent message\n");
-
-    struct new_account_response *response = malloc(sizeof(struct new_account_response));
-    bzero(response, sizeof(struct new_account_response));
-    receive_message(sock_id, response, sizeof(struct new_account_response));
-
-    printf("Response: %s\n", response->response);
-    printf("Success: %i\n", response->success);
-    printf("Pix: %s\n", response->pix);
-    printf("Token: %s\n\n", response->token);
-
-    if (response->success)
-    {
-        if (secondary)
-        {
-            strcpy(secondary_acc_pix, response->pix);
-        }
-        else
-        {
-            strcpy(acc_token, response->token);
-        }
-    }
-}
-
-void make_deposit(int sock_id)
-{
-    struct deposit deposit;
-    bzero(&(deposit), sizeof(deposit));
-    strcpy(deposit.token, acc_token);
-    deposit.value = 10.51;
-
-    size_t size = METHOD_SIZE + sizeof(deposit);
-    void *data = malloc(size);
-    bzero(data, METHOD_SIZE);
-
-    char *method = malloc(METHOD_SIZE);
-    bzero(method, METHOD_SIZE);
-    strcpy(method, DEPOSIT_METHOD);
-
-    memcpy(data, method, METHOD_SIZE);
-    memcpy(data + METHOD_SIZE, &(deposit), sizeof(deposit));
-
-    send_message(sock_id, data, size);
-
-    printf("Sent message\n");
-
-    struct deposit_response *response = malloc(sizeof(struct deposit_response));
-    bzero(response, sizeof(struct deposit_response));
-    receive_message(sock_id, response, sizeof(struct deposit_response));
-
-    printf("Success: %d\nResponse: %s\n\n", response->success, response->response);
-}
-
-void make_withdraw(int sock_id)
-{
-    struct withdraw withdraw;
-    bzero(&(withdraw), sizeof(withdraw));
-    strcpy(withdraw.token, acc_token);
-    withdraw.value = 1.00;
-
-    size_t size = METHOD_SIZE + sizeof(withdraw);
-    void *data = malloc(size);
-    bzero(data, METHOD_SIZE);
-
-    char *method = malloc(METHOD_SIZE);
-    bzero(method, METHOD_SIZE);
-    strcpy(method, WITHDRAW_METHOD);
-
-    memcpy(data, method, METHOD_SIZE);
-    memcpy(data + METHOD_SIZE, &(withdraw), sizeof(withdraw));
-
-    send_message(sock_id, data, size);
-
-    printf("Sent message\n");
-
-    struct withdraw_response *response = malloc(sizeof(struct withdraw_response));
-    bzero(response, sizeof(struct withdraw_response));
-    receive_message(sock_id, response, sizeof(struct withdraw_response));
-
-    printf("Success: %d\nResponse: %s\n\n", response->success, response->response);
-}
-
-void make_transfer(int sock_id)
-{
-    struct transfer transfer;
-    bzero(&(transfer), sizeof(transfer));
-    strcpy(transfer.token, acc_token);
-    strcpy(transfer.destination_account_pix, secondary_acc_pix);
-    transfer.value = 1.25;
-
-    size_t size = METHOD_SIZE + sizeof(transfer);
-    void *data = malloc(size);
-    bzero(data, METHOD_SIZE);
-
-    char *method = malloc(METHOD_SIZE);
-    bzero(method, METHOD_SIZE);
-    strcpy(method, TRANSFER_METHOD);
-
-    memcpy(data, method, METHOD_SIZE);
-    memcpy(data + METHOD_SIZE, &(transfer), sizeof(transfer));
-
-    send_message(sock_id, data, size);
-
-    printf("Sent message\n");
-
-    struct transfer_response *response = malloc(sizeof(struct transfer_response));
-    bzero(response, sizeof(struct transfer_response));
-    receive_message(sock_id, response, sizeof(struct transfer_response));
-
-    printf("Success: %d\nResponse: %s\n\n", response->success, response->response);
-}
-
-void get_bank_statement(int sock_id, unsigned int page)
-{
-    struct list_bank_statement info;
-    bzero(&(info), sizeof(info));
-    info.page = page;
-    strcpy(info.token, acc_token);
-
-    size_t size = METHOD_SIZE + sizeof(info);
-    void *data = malloc(size);
-    bzero(data, METHOD_SIZE);
-
-    char *method = malloc(METHOD_SIZE);
-    bzero(method, METHOD_SIZE);
-    strcpy(method, LIST_BANK_STATEMENT_METHOD);
-
-    memcpy(data, method, METHOD_SIZE);
-    memcpy(data + METHOD_SIZE, &(info), sizeof(info));
-
-    send_message(sock_id, data, size);
-
-    printf("Sent message asdasdas\n");
-
-    struct list_bank_statement_response *response = malloc(sizeof(struct list_bank_statement_response));
-    bzero(response, sizeof(struct list_bank_statement_response));
-    receive_message(sock_id, response, sizeof(struct list_bank_statement_response));
-
-    printf("Page index: %u\n", response->page_index);
-    printf("Current page size: %u\n", response->current_page_size);
-    printf("Total count: %u\n", response->total_count);
-
-    for (int i = 0; i < response->current_page_size; i++)
-    {
-        printf("%i: %s\n", i, response->value[i]);
-    }
-
-    printf("\n");
-}
-
-void sign_in(int sock_id)
-{
-    struct login login;
-    bzero(&(login), sizeof(login));
-    strcpy(login.cpf, "11111111111");
-    strcpy(login.password, "12345");
-
-    size_t size = METHOD_SIZE + sizeof(login);
-    void *data = malloc(size);
-    bzero(data, METHOD_SIZE);
-
-    char *method = malloc(METHOD_SIZE);
-    bzero(method, METHOD_SIZE);
-    strcpy(method, LOGIN_METHOD);
-
-    memcpy(data, method, METHOD_SIZE);
-    memcpy(data + METHOD_SIZE, &(login), sizeof(login));
-
-    send_message(sock_id, data, size);
-
-    printf("Sent message\n");
-
-    struct login_response *response = malloc(sizeof(struct login_response));
-    bzero(response, sizeof(struct login_response));
-    receive_message(sock_id, response, sizeof(struct login_response));
-
-    printf("Response: %s\n", response->response);
-    printf("Success: %i\n", response->success);
-    printf("Token: %s\n\n", response->token);
-
-    if (response->success)
-    {
-        strcpy(acc_token, response->token);
-    }
-}
-
-void check_info(int sock_id)
-{
-    struct account_info info;
-    bzero(&(info), sizeof(info));
-    strcpy(info.token, acc_token);
-
-    size_t size = METHOD_SIZE + sizeof(info);
-    void *data = malloc(size);
-    bzero(data, METHOD_SIZE);
-
-    char *method = malloc(METHOD_SIZE);
-    bzero(method, METHOD_SIZE);
-    strcpy(method, ACCOUNT_INFO_METHOD);
-
-    memcpy(data, method, METHOD_SIZE);
-    memcpy(data + METHOD_SIZE, &(info), sizeof(info));
-
-    send_message(sock_id, data, size);
-
-    printf("Sent message\n");
-
-    struct account_info_response *response = malloc(sizeof(struct account_info_response));
-    bzero(response, sizeof(struct account_info_response));
-    receive_message(sock_id, response, sizeof(struct account_info_response));
-
-    printf("Response: %s\n", response->response);
-    printf("Success: %i\n", response->success);
-    printf("Name: %s\n", response->name);
-    printf("Pix: %s\n", response->pix);
-    printf("Balance: %s\n\n", response->balance);
-}
-
-void list_accounts(int sock_id, unsigned int page)
-{
-    struct list_account info;
-    bzero(&(info), sizeof(info));
-    info.page = page;
-
-    size_t size = METHOD_SIZE + sizeof(info);
-    void *data = malloc(size);
-    bzero(data, METHOD_SIZE);
-
-    char *method = malloc(METHOD_SIZE);
-    bzero(method, METHOD_SIZE);
-    strcpy(method, LIST_ACCOUNTS_METHOD);
-
-    memcpy(data, method, METHOD_SIZE);
-    memcpy(data + METHOD_SIZE, &(info), sizeof(info));
-
-    send_message(sock_id, data, size);
-
-    printf("Sent message\n");
-
-    struct list_account_response *response = malloc(sizeof(struct list_account_response));
-    bzero(response, sizeof(struct list_account_response));
-    receive_message(sock_id, response, sizeof(struct list_account_response));
-
-    printf("Page index: %u\n", response->page_index);
-    printf("Current page size: %u\n", response->current_page_size);
-    printf("Total count: %u\n", response->total_count);
-
-    for (int i = 0; i < response->current_page_size; i++)
-    {
-        printf("%i: %s\n", i, response->accounts[i]);
-    }
-
-    printf("\n");
-}
-*/
-
-
 void abrir_menu()
 {
     char account_token[37];
@@ -349,33 +69,38 @@ void abrir_menu()
         switch (choice)
         {
         case 1: // Cadastrar conta
-            create_account();
-            break;
-        case 2: // Realizar login
-            char *token = sign_in();
+            char *token = create_account();
             if (token != NULL)
             {
                 strcpy(account_token, token);
-                printf("Token: %s", account_token);
+                logged_in = 1;
+            }
+            break;
+        case 2: // Realizar login
+            char *sign_in_token = sign_in();
+            if (sign_in_token != NULL)
+            {
+                strcpy(account_token, sign_in_token);
+                logged_in = 1;
             }
             break;
         case 3: // Listar contas
-            
+            list_accounts();
             break;
         case 4: // Exibir informações da conta
-            
+            show_account_info(account_token);
             break;
         case 5: // Depósito
-            
+            make_deposit(account_token);
             break;
         case 6: // Saque
-            
+            make_withdraw(account_token);
             break;
         case 7: // Transferência
-            
+            make_transfer(account_token);
             break;
         case 8: // Verificar extrato
-            
+            get_bank_statement(account_token);
             break;
         case 9: // Sair
             exit(0);

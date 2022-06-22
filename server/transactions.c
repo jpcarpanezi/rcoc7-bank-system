@@ -207,43 +207,52 @@ struct response get_bank_statement(void *info_ptr)
         // Verifica se a conta está presente na transação
         int is_dest = strcmp(bs->destination_account_pix, acc->pix);
         int is_origin = strcmp(bs->origin_account_pix, acc->pix);
-        if (is_dest || is_origin)
+        if (is_dest == 0 || is_origin == 0)
         {
             i++;
         }
 
-        if (current_page == res->page_index && (is_dest || is_origin))
+        if (current_page == res->page_index && (is_dest == 0 || is_origin == 0))
         {
             // Valida se o usuário recebeu ou enviou o dinheiro
             double value = 0.0;
+            char type[80];
             switch (bs->type)
             {
             case Deposit:
                 value += ((double)bs->value) / 100;
+                strcpy(type, "Depósito - ");
                 break;
             case Withdraw:
                 value -= ((double)bs->value) / 100;
+                strcpy(type, "Saque - ");
                 break;
             case Transfer:
                 if (is_origin == 0)
                 {
+                    strcpy(type, "Transferência enviada - ");
                     value -= ((double)bs->value) / 100;
                 }
                 else
                 {
+                    strcpy(type, "Transferência recebida - ");
                     value += ((double)bs->value) / 100;
                 }
                 break;
             default:
                 value += ((double)bs->value) / 100;
+                strcpy(type, "");
                 break;
             }
 
             // Faz a formatação do valor e adiciona o prefixo R$
             char value_str[50];
             snprintf(value_str, sizeof(value_str), "%.2f", value);
+            
             char value_response[50] = "R$ ";
-            strcpy(res->value[res->current_page_size], strcat(value_response, value_str));
+            strcat(value_response, value_str);
+
+            strcpy(res->value[res->current_page_size], strcat(type, value_response));
             res->current_page_size++;
         }
 
@@ -430,7 +439,7 @@ struct response make_transfer(void *info_ptr)
     }
 
     // Adiciona ao extrato bancário, adiciona o saldo na conta destino e debita da conta de origem
-    add_to_bank_statement(destination_acc->pix, acc->pix, value, Deposit);
+    add_to_bank_statement(destination_acc->pix, acc->pix, value, Transfer);
     acc->balance -= value;
     destination_acc->balance += value;
 

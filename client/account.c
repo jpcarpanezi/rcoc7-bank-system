@@ -101,13 +101,19 @@ typedef struct list_account_response
     char accounts[PAGE_SIZE][37];
 } list_account_response;
 
-void create_account()
+char *create_account()
 {
     struct new_account acc;
     bzero(&(acc), sizeof(acc));
-    strcpy(acc.cpf, "11111111111");
-    strcpy(acc.name, "MEU NOMBRE");
-    strcpy(acc.password, "12345");
+
+    printf("Insira seu CPF (sem pontuação): ");
+    scanf("%s", acc.cpf);
+
+    printf("Insira seu nome: ");
+    scanf("%s", acc.name);
+
+    printf("Insira sua senha: ");
+    scanf("%s", acc.password);
 
     size_t size = METHOD_SIZE + sizeof(acc);
     void *data = malloc(size);
@@ -124,16 +130,18 @@ void create_account()
     connect_socket(sock_id, server_ip);
     send_message(sock_id, data, size);
 
-    printf("Sent message\n");
-
     struct new_account_response *response = malloc(sizeof(struct new_account_response));
     bzero(response, sizeof(struct new_account_response));
     receive_message(sock_id, response, sizeof(struct new_account_response));
 
-    printf("Response: %s\n", response->response);
-    printf("Success: %i\n", response->success);
-    printf("Pix: %s\n", response->pix);
-    printf("Token: %s\n\n", response->token);
+    if (response->success)
+    {
+        printf("Conta criada com sucesso! Sua chave pix é: %s\n", response->pix);
+        return response->token;
+    }
+
+    printf("Ocorreu um erro ao criar a conta: %s\n", response->response);
+    return NULL;
 }
 
 char *sign_in()
@@ -141,10 +149,10 @@ char *sign_in()
     struct login login;
     bzero(&(login), sizeof(login));
 
-    printf("Digite seu CPF (sem pontuação): ");
+    printf("Insira seu CPF (sem pontuação): ");
     scanf("%s", login.cpf);
 
-    printf("Digite sua senha: ");
+    printf("Insira sua senha: ");
     scanf("%s", login.password);
 
     int sock_id = create_socket();
@@ -175,4 +183,101 @@ char *sign_in()
 
     printf("Ocorreu um erro ao fazer o login: %s\n", response->response);
     return NULL;
+}
+
+void list_accounts()
+{
+    struct list_account info;
+    bzero(&(info), sizeof(info));
+
+    size_t size = METHOD_SIZE + sizeof(info);
+    void *data = malloc(size);
+    bzero(data, METHOD_SIZE);
+
+    char *method = malloc(METHOD_SIZE);
+    bzero(method, METHOD_SIZE);
+    strcpy(method, LIST_ACCOUNTS_METHOD);
+
+    int page = 0;
+    do
+    {
+        info.page = page;
+
+        memcpy(data, method, METHOD_SIZE);
+        memcpy(data + METHOD_SIZE, &(info), sizeof(info));
+
+        int sock_id = create_socket();
+        connect_socket(sock_id, server_ip);
+        send_message(sock_id, data, size);
+
+        struct list_account_response *response = malloc(sizeof(struct list_account_response));
+        bzero(response, sizeof(struct list_account_response));
+        receive_message(sock_id, response, sizeof(struct list_account_response));
+
+        printf("Página atual: %u\n", response->page_index);
+        printf("Contas na página atual: %u\n", response->current_page_size);
+        printf("Total de contas: %u\n", response->total_count);
+
+        if (response->current_page_size)
+        {
+            printf("Contas:\n");
+        }
+        else
+        {
+            printf("Nenhuma conta na página atual\n");
+        }
+
+        for (int i = 0; i < response->current_page_size; i++)
+        {
+            printf("%i: %s\n", (i + 1), response->accounts[i]);
+        }
+
+        printf("\nDigite o número da página desejada ou digite -1 para voltar ao menu: ");
+        scanf("%i", &(page));
+
+        printf("\n");
+
+        if (page < -1)
+        {
+            page = -1;
+        }
+    } while (page != -1);
+}
+
+void show_account_info(char *account_token)
+{
+    struct account_info info;
+    bzero(&(info), sizeof(info));
+    strcpy(info.token, account_token);
+
+    size_t size = METHOD_SIZE + sizeof(info);
+    void *data = malloc(size);
+    bzero(data, METHOD_SIZE);
+
+    char *method = malloc(METHOD_SIZE);
+    bzero(method, METHOD_SIZE);
+    strcpy(method, ACCOUNT_INFO_METHOD);
+
+    memcpy(data, method, METHOD_SIZE);
+    memcpy(data + METHOD_SIZE, &(info), sizeof(info));
+
+    int sock_id = create_socket();
+    connect_socket(sock_id, server_ip);
+    send_message(sock_id, data, size);
+
+    struct account_info_response *response = malloc(sizeof(struct account_info_response));
+    bzero(response, sizeof(struct account_info_response));
+    receive_message(sock_id, response, sizeof(struct account_info_response));
+
+    if (response->success)
+    {
+        printf("%s\n", response->response);
+        printf("Nome: %s\n", response->name);
+        printf("Chave Pix: %s\n", response->pix);
+        printf("Saldo: %s\n", response->balance);
+    }
+    else
+    {
+        printf("Não foi possível carregar as informações da conta: %s\n", response->response);
+    }
 }
